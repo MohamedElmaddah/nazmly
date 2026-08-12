@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nazmly — Task Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --paper:#F7F3EA;
+    --paper-line:#DDD4C0;
+    --amber:#D98E2B;
+    --amber-soft:#F1C77C;
+    --sage:#6E8F72;
+    --charcoal:#26241F;
+    --muted:#8A8272;
+    --error:#B5482F;
+    --radius:3px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+
+  body{
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 34px,
+      var(--paper-line) 34px,
+      var(--paper-line) 35px
+    );
+    background-attachment:local;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .fade-in{
+      animation: rise 0.5s ease both;
+    }
+    @keyframes rise{
+      from{ opacity:0; transform:translateY(8px); }
+      to{ opacity:1; transform:translateY(0); }
+    }
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    max-width:1080px;
+    margin:0 auto;
+    padding:28px 28px 20px;
+    border-bottom:1px solid var(--ink);
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+  }
+  .brand-mark{
+    font-family:'Newsreader', serif;
+    font-size:26px;
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  .brand-tag{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-size:14px;
+    color:var(--muted);
+  }
+  .grade-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink);
+    border:1px solid var(--ink);
+    border-radius:var(--radius);
+    padding:5px 10px;
+    align-self:center;
+  }
+
+  /* ---------- page shell ---------- */
+  .shell{
+    max-width:1080px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:0;
+  }
+
+  /* ---------- subject tabs (signature element, adapted) ---------- */
+  .subjects{
+    border-right:1px solid var(--ink);
+    padding:26px 0 26px 28px;
+  }
+  .subjects .eyebrow{ margin-bottom:14px; display:block; }
+
+  .tab-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .tab{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    background:transparent;
+    border:1px solid var(--paper-line);
+    border-right:none;
+    border-radius:var(--radius) 0 0 var(--radius);
+    padding:9px 14px 9px 12px;
+    margin-right:-1px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--charcoal);
+    cursor:pointer;
+    text-align:left;
+    width:100%;
+  }
+  .tab .count{
+    font-size:10px;
+    color:var(--muted);
+  }
+  .tab:hover{
+    background:rgba(217,142,43,0.08);
+    border-color:var(--amber-soft);
+  }
+  .tab.active{
+    background:var(--paper);
+    border-color:var(--ink);
+    color:var(--ink);
+    font-weight:600;
+  }
+  .tab.active::after{
+    content:"";
+    position:absolute;
+    right:-1px; top:-1px; bottom:-1px;
+    width:3px;
+    background:var(--amber);
+  }
+
+  .add-subject{
+    margin-top:14px;
+    display:flex;
+    gap:6px;
+  }
+  .add-subject input{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px dashed var(--paper-line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--charcoal);
+    padding:6px 2px;
+    outline:none;
+  }
+  .add-subject input::placeholder{ color:var(--muted); text-transform:none; letter-spacing:0; }
+  .add-subject input:focus{ border-bottom-color:var(--amber); }
+
+  /* ---------- main panel ---------- */
+  .main{
+    padding:26px 28px 60px;
+  }
+
+  .index-tracker{
+    margin-bottom:26px;
+  }
+  .index-tracker .label-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:10px;
+  }
+  .index-tracker .headline{
+    font-family:'Newsreader', serif;
+    font-size:20px;
+    font-weight:500;
+    color:var(--ink);
+  }
+  .index-tracker .headline em{
+    color:var(--muted);
+    font-size:14px;
+  }
+  .tab-strip{
+    display:flex;
+    gap:3px;
+  }
+  .tab-strip .notch{
+    flex:1;
+    height:16px;
+    background:var(--paper);
+    border:1px solid var(--ink);
+    border-radius:2px 2px 0 0;
+    position:relative;
+    overflow:hidden;
+  }
+  .tab-strip .notch.filled{
+    background:var(--sage);
+    border-color:var(--sage);
+  }
+  .tab-strip .notch.filled::after{
+    content:"";
+  }
+
+  /* ---------- add task row ---------- */
+  .ledger-card{
+    background:var(--paper);
+    border:1px solid var(--ink);
+    border-radius:var(--radius);
+  }
+
+  .add-row{
+    display:grid;
+    grid-template-columns:1fr 130px 130px auto;
+    gap:10px;
+    padding:16px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .field label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .field input, .field select{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    color:var(--charcoal);
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--paper-line);
+    padding:6px 2px;
+    outline:none;
+  }
+  .field select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .field input::placeholder{ color:var(--muted); }
+  .field input:focus, .field select:focus{ border-bottom-color:var(--amber); }
+
+  .file-btn{
+    align-self:end;
+    background:var(--amber);
+    color:var(--paper);
+    border:none;
+    border-radius:var(--radius);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 18px;
+    cursor:pointer;
+    height:36px;
+    transition:background 0.15s ease;
+  }
+  .file-btn:hover{ background:#c17f22; }
+  .file-btn:active{ transform:translateY(1px); }
+
+  .error-text{
+    grid-column:1 / -1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--error);
+    display:none;
+    margin-top:-4px;
+  }
+  .error-text.show{ display:block; }
+
+  /* ---------- task rows ---------- */
+  .task-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  .task-row{
+    display:grid;
+    grid-template-columns:22px 1fr auto auto 20px;
+    align-items:center;
+    gap:14px;
+    padding:13px 16px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .task-row:last-child{ border-bottom:none; }
+
+  .check{
+    width:18px;
+    height:18px;
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    background:transparent;
+    cursor:pointer;
+    position:relative;
+    padding:0;
+  }
+  .check:hover{ border-color:var(--sage); }
+  .task-row.done .check{
+    background:var(--sage);
+    border-color:var(--sage);
+  }
+  .task-row.done .check::after{
+    content:"";
+    position:absolute;
+    left:5px; top:1px;
+    width:4px; height:8px;
+    border:solid var(--paper);
+    border-width:0 2px 2px 0;
+    transform:rotate(45deg);
+  }
+
+  .task-text{
+    font-size:14px;
+    line-height:1.4;
+    word-break:break-word;
+  }
+  .task-row.done .task-text{
+    text-decoration:line-through;
+    color:var(--muted);
+  }
+
+  .subject-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    padding:3px 7px;
+    white-space:nowrap;
+  }
+  .task-row.done .subject-tag{
+    color:var(--muted);
+    border-color:var(--paper-line);
+  }
+
+  .due-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .due-tag.overdue{ color:var(--error); }
+
+  .remove{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    padding:0;
+    opacity:0;
+    transition:opacity 0.15s ease;
+  }
+  .task-row:hover .remove{ opacity:1; }
+  .remove:hover{ color:var(--error); }
+
+  .empty-msg{
+    text-align:center;
+    padding:40px 16px;
+    color:var(--muted);
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-size:15px;
+  }
+
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:14px;
+    padding:0 4px;
+  }
+  #clearBtn{
+    background:none;
+    border:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    cursor:pointer;
+    padding:0;
+  }
+  #clearBtn:hover{ color:var(--error); }
+
+  button:focus-visible, input:focus-visible, select:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width:760px){
+    .shell{
+      grid-template-columns:1fr;
+    }
+    .subjects{
+      border-right:none;
+      border-bottom:1px solid var(--ink);
+      padding:16px 20px;
+    }
+    .tab-list{
+      flex-direction:row;
+      flex-wrap:wrap;
+    }
+    .tab{
+      border-right:1px solid var(--paper-line);
+      border-radius:var(--radius);
+      width:auto;
+      margin-right:0;
+    }
+    .tab.active::after{ display:none; }
+    .add-subject{ margin-top:12px; }
+    .main{ padding:20px 20px 48px; }
+    .add-row{
+      grid-template-columns:1fr;
+    }
+    .file-btn{ width:100%; }
+    .task-row{
+      grid-template-columns:20px 1fr 20px;
+      row-gap:6px;
+    }
+    .task-row .subject-tag, .task-row .due-tag{
+      grid-column:2;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar fade-in">
+  <div class="brand">
+    <span class="brand-mark">Nazmly</span>
+    <span class="brand-tag">— everything filed in its place</span>
+  </div>
+  <span class="grade-chip" id="gradeChip">Grade 11</span>
+</div>
+
+<div class="shell">
+
+  <!-- subject tabs -->
+  <aside class="subjects fade-in">
+    <span class="eyebrow">Subjects</span>
+    <ul class="tab-list" id="tabList"></ul>
+    <div class="add-subject">
+      <input id="subjectInput" type="text" placeholder="+ new subject" maxlength="18" autocomplete="off">
+    </div>
+  </aside>
+
+  <!-- main ledger -->
+  <main class="main fade-in">
+
+    <div class="index-tracker">
+      <div class="label-row">
+        <span class="headline" id="trackerHeadline">0 of 0 filed <em>today's index</em></span>
+      </div>
+      <div class="tab-strip" id="tabStrip"></div>
+    </div>
+
+    <div class="ledger-card">
+      <div class="add-row">
+        <div class="field">
+          <label for="taskInput">Task</label>
+          <input id="taskInput" type="text" placeholder="What needs filing?" maxlength="140" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="subjectSelect">Subject</label>
+          <select id="subjectSelect"></select>
+        </div>
+        <div class="field">
+          <label for="dueInput">Due</label>
+          <input id="dueInput" type="date">
+        </div>
+        <button class="file-btn" id="addBtn">File task</button>
+        <div class="error-text" id="errorText">Enter a task before filing it.</div>
+      </div>
+
+      <ul class="task-list" id="taskList"></ul>
+      <div class="empty-msg" id="emptyMsg">Nothing filed yet — the ledger is clear.</div>
+    </div>
+
+    <div class="footer-row">
+      <span class="eyebrow" id="countText">0 open</span>
+      <button id="clearBtn">Clear completed</button>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const STORAGE_KEY = 'nazmly-tasks';
+  const SUBJECTS_KEY = 'nazmly-subjects';
+
+  const defaultSubjects = ['Math', 'Science', 'English', 'History', 'Arabic'];
+  let subjects = [...defaultSubjects];
+  let tasks = [];
+  let activeFilter = 'All';
+
+  const tabList = document.getElementById('tabList');
+  const subjectSelect = document.getElementById('subjectSelect');
+  const subjectInput = document.getElementById('subjectInput');
+  const taskInput = document.getElementById('taskInput');
+  const dueInput = document.getElementById('dueInput');
+  const addBtn = document.getElementById('addBtn');
+  const errorText = document.getElementById('errorText');
+  const taskList = document.getElementById('taskList');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const countText = document.getElementById('countText');
+  const clearBtn = document.getElementById('clearBtn');
+  const tabStrip = document.getElementById('tabStrip');
+  const trackerHeadline = document.getElementById('trackerHeadline');
+
+  function uid(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  }
+
+  function todayISO(){
+    return new Date().toISOString().slice(0,10);
+  }
+
+  function formatDue(iso){
+    if(!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  }
+
+  async function loadAll(){
+    try{
+      const t = await window.storage.get(STORAGE_KEY, false);
+      if(t && t.value) tasks = JSON.parse(t.value);
+    }catch(e){ tasks = []; }
+    try{
+      const s = await window.storage.get(SUBJECTS_KEY, false);
+      if(s && s.value) subjects = JSON.parse(s.value);
+    }catch(e){ /* keep defaults */ }
+    renderAll();
+  }
+
+  async function saveTasks(){
+    try{ await window.storage.set(STORAGE_KEY, JSON.stringify(tasks), false); }
+    catch(e){ console.error('Could not save tasks', e); }
+  }
+  async function saveSubjects(){
+    try{ await window.storage.set(SUBJECTS_KEY, JSON.stringify(subjects), false); }
+    catch(e){ console.error('Could not save subjects', e); }
+  }
+
+  function addSubject(name){
+    const trimmed = name.trim();
+    if(!trimmed) return;
+    const exists = subjects.some(s => s.toLowerCase() === trimmed.toLowerCase());
+    if(exists) return;
+    subjects.push(trimmed);
+    saveSubjects();
+    renderAll();
+  }
+
+  function addTask(){
+    const text = taskInput.value.trim();
+    if(!text){
+      errorText.classList.add('show');
+      taskInput.focus();
+      return;
+    }
+    errorText.classList.remove('show');
+    tasks.push({
+      id: uid(),
+      text,
+      subject: subjectSelect.value,
+      due: dueInput.value || '',
+      done: false
+    });
+    taskInput.value = '';
+    dueInput.value = '';
+    saveTasks();
+    renderAll();
+    taskInput.focus();
+  }
+
+  function toggleTask(id){
+    const t = tasks.find(t => t.id === id);
+    if(t) t.done = !t.done;
+    saveTasks();
+    renderAll();
+  }
+
+  function removeTask(id){
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+    renderAll();
+  }
+
+  function clearCompleted(){
+    tasks = tasks.filter(t => !t.done);
+    saveTasks();
+    renderAll();
+  }
+
+  function setFilter(subject){
+    activeFilter = subject;
+    renderAll();
+  }
+
+  function renderTabs(){
+    tabList.innerHTML = '';
+    const all = ['All', ...subjects];
+    all.forEach(subject => {
+      const count = subject === 'All'
+        ? tasks.filter(t => !t.done).length
+        : tasks.filter(t => t.subject === subject && !t.done).length;
+
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (activeFilter === subject ? ' active' : '');
+      btn.type = 'button';
+
+      const name = document.createElement('span');
+      name.textContent = subject;
+      const c = document.createElement('span');
+      c.className = 'count';
+      c.textContent = count;
+
+      btn.appendChild(name);
+      btn.appendChild(c);
+      btn.addEventListener('click', () => setFilter(subject));
+      li.appendChild(btn);
+      tabList.appendChild(li);
+    });
+  }
+
+  function renderSubjectSelect(){
+    const current = subjectSelect.value;
+    subjectSelect.innerHTML = '';
+    subjects.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      subjectSelect.appendChild(opt);
+    });
+    if(subjects.includes(current)) subjectSelect.value = current;
+  }
+
+  function renderTracker(){
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    trackerHeadline.innerHTML = `${done} of ${total} filed &nbsp;<em>today's index</em>`;
+
+    tabStrip.innerHTML = '';
+    const slots = Math.max(total, 1);
+    for(let i = 0; i < slots; i++){
+      const notch = document.createElement('div');
+      notch.className = 'notch' + (i < done ? ' filled' : '');
+      tabStrip.appendChild(notch);
+    }
+  }
+
+  function renderTaskList(){
+    const today = todayISO();
+    const filtered = activeFilter === 'All'
+      ? tasks
+      : tasks.filter(t => t.subject === activeFilter);
+
+    taskList.innerHTML = '';
+    emptyMsg.style.display = filtered.length === 0 ? 'block' : 'none';
+    emptyMsg.textContent = tasks.length === 0
+      ? 'Nothing filed yet — the ledger is clear.'
+      : 'No tasks under this tab.';
+
+    filtered.forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'task-row' + (task.done ? ' done' : '');
+
+      const check = document.createElement('button');
+      check.className = 'check';
+      check.setAttribute('aria-label', task.done ? 'Mark as not done' : 'Mark as done');
+      check.addEventListener('click', () => toggleTask(task.id));
+
+      const text = document.createElement('span');
+      text.className = 'task-text';
+      text.textContent = task.text;
+
+      const tag = document.createElement('span');
+      tag.className = 'subject-tag';
+      tag.textContent = task.subject;
+
+      const due = document.createElement('span');
+      due.className = 'due-tag';
+      if(task.due){
+        due.textContent = formatDue(task.due);
+        if(task.due < today && !task.done) due.classList.add('overdue');
+      }
+
+      const remove = document.createElement('button');
+      remove.className = 'remove';
+      remove.setAttribute('aria-label', 'Remove task');
+      remove.textContent = '×';
+      remove.addEventListener('click', () => removeTask(task.id));
+
+      li.appendChild(check);
+      li.appendChild(text);
+      li.appendChild(tag);
+      li.appendChild(due);
+      li.appendChild(remove);
+      taskList.appendChild(li);
+    });
+  }
+
+  function renderFooter(){
+    const open = tasks.filter(t => !t.done).length;
+    countText.textContent = `${open} open`;
+  }
+
+  function renderAll(){
+    renderTabs();
+    renderSubjectSelect();
+    renderTracker();
+    renderTaskList();
+    renderFooter();
+  }
+
+  addBtn.addEventListener('click', addTask);
+  taskInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') addTask();
+  });
+  taskInput.addEventListener('input', () => errorText.classList.remove('show'));
+
+  subjectInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      addSubject(subjectInput.value);
+      subjectInput.value = '';
+    }
+  });
+
+  clearBtn.addEventListener('click', clearCompleted);
+
+  loadAll();
+</script>
+
+</body>
+</html>

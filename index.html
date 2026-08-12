@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nazmly — study, in order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --paper:#F7F3EA;
+    --paper-line:#DDD4C0;
+    --amber:#D98E2B;
+    --amber-soft:#F1C77C;
+    --sage:#6E8F72;
+    --charcoal:#26241F;
+    --muted:#8A8272;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; background:var(--ink); }
+
+  /* ---------- nav bar (only new UI on this page) ---------- */
+  .nazmly-nav{
+    display:flex;
+    align-items:center;
+    gap:0;
+    background:var(--ink);
+    padding:0 20px;
+    height:52px;
+    border-bottom:1px solid #2A3D63;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .nazmly-nav .wordmark{
+    font-family:'Newsreader', serif;
+    font-weight:600;
+    font-size:18px;
+    color:var(--paper);
+    margin-right:28px;
+    letter-spacing:-0.01em;
+    white-space:nowrap;
+  }
+  .nazmly-nav .tabs{
+    display:flex;
+    gap:4px;
+    height:100%;
+  }
+  .nazmly-nav button{
+    appearance:none;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid transparent;
+    color:#C9CFDE;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.09em;
+    text-transform:uppercase;
+    padding:0 14px;
+    height:100%;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .nazmly-nav button .n{
+    color:var(--muted);
+    font-size:10px;
+  }
+  .nazmly-nav button:hover{ color:var(--paper); }
+  .nazmly-nav button.active{
+    color:var(--paper);
+    border-bottom-color:var(--amber);
+  }
+  .nazmly-nav button.active .n{ color:var(--amber-soft); }
+  .nazmly-nav button:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:-2px;
+  }
+  .nazmly-nav button:disabled{
+    color:#5A6788;
+    cursor:not-allowed;
+    pointer-events:none;
+  }
+  .nazmly-nav button:disabled .n{ color:#41496b; }
+
+  /* ---------- page frames ---------- */
+  .frame-stack{
+    position:relative;
+    height:calc(100% - 52px);
+    background:var(--paper);
+  }
+  .frame-stack iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:none;
+    display:none;
+    background:var(--paper);
+  }
+  .frame-stack iframe.active{ display:block; }
+</style>
+</head>
+<body>
+
+<nav class="nazmly-nav">
+  <span class="wordmark">Nazmly</span>
+  <div class="tabs" id="pageTabs">
+    <button type="button" class="active" data-target="frame-signup"><span class="n">001</span>Sign up</button>
+    <button type="button" data-target="frame-login"><span class="n">002</span>Log in</button>
+    <button type="button" data-target="frame-main"><span class="n">003</span>Main</button>
+    <button type="button" data-target="frame-timer"><span class="n">004</span>Timer</button>
+    <button type="button" data-target="frame-tasks"><span class="n">005</span>Task Ledger</button>
+  </div>
+</nav>
+
+<div class="frame-stack">
+  <iframe id="frame-signup" class="active" src="signup.html" title="Nazmly — Create your account"></iframe>
+  <iframe id="frame-login" src="login.html" title="Nazmly — Log in"></iframe>
+  <iframe id="frame-main" src="main.html" title="Nazmly — Choose your board"></iframe>
+  <iframe id="frame-timer" src="timer.html" title="Nazmly — Timer"></iframe>
+  <iframe id="frame-tasks" src="tasks.html" title="Nazmly — Task Ledger"></iframe>
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('#pageTabs button');
+  const frames = document.querySelectorAll('.frame-stack iframe');
+
+  // Base src for each frame, used to force a clean reload (clears any typed values)
+  const baseSrc = {};
+  frames.forEach(f => { baseSrc[f.id] = f.getAttribute('src'); });
+
+  // Only Sign up is reachable at the start. Log in unlocks once signup
+  // is completed (or the user explicitly says they already have an account).
+  // Main / Timer / Task Ledger unlock only once login is completed.
+  const unlocked = new Set(['frame-signup']);
+
+  function updateButtonStates(){
+    buttons.forEach(b => {
+      const isUnlocked = unlocked.has(b.dataset.target);
+      b.disabled = !isUnlocked;
+    });
+  }
+
+  function activateTarget(targetId){
+    const targetFrame = document.getElementById(targetId);
+    if(!targetFrame || !unlocked.has(targetId)) return;
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.target === targetId));
+    frames.forEach(f => f.classList.toggle('active', f.id === targetId));
+  }
+
+  function reloadFrame(frameId){
+    const frame = document.getElementById(frameId);
+    if(!frame || !baseSrc[frameId]) return;
+    frame.src = baseSrc[frameId] + '?_=' + Date.now();
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => activateTarget(btn.dataset.target));
+  });
+
+  // Let child pages (signup/login/main) navigate the shell,
+  // e.g. after a successful signup, login, or logout.
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if(!data || data.type !== 'nazmly:navigate') return;
+
+    if(Array.isArray(data.unlock)){
+      data.unlock.forEach(id => unlocked.add(id));
+    }
+    if(Array.isArray(data.lock)){
+      data.lock.forEach(id => unlocked.delete(id));
+    }
+    updateButtonStates();
+
+    if(data.reload){
+      reloadFrame(data.reload);
+    }
+    if(typeof data.target === 'string'){
+      activateTarget(data.target);
+    }
+  });
+
+  updateButtonStates();
+</script>
+
+</body>
+</html>

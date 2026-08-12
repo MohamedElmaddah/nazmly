@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nazmly — Log in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A; --paper:#F7F3EA; --paper-line:#DDD4C0;
+    --amber:#D98E2B; --amber-soft:#F1C77C; --sage:#6E8F72;
+    --charcoal:#26241F; --muted:#8A8272; --error:#B5482F; --radius:3px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--ink); color:var(--charcoal);
+    min-height:100vh; display:flex; align-items:stretch; justify-content:center;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+
+  .stage{ display:flex; width:100%; min-height:100vh; }
+
+  .ledger{
+    position:relative; flex:0 0 42%;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0px, transparent 39px, var(--paper-line) 39px, var(--paper-line) 40px),
+      var(--paper);
+    padding:64px 56px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;
+  }
+  .ledger::before{ content:""; position:absolute; top:0; bottom:0; left:110px; width:1px; background:#D8AFA0; opacity:.6; }
+  @media (max-width:920px){ .ledger{display:none;} }
+
+  .brand{ position:relative; z-index:2; padding-left:34px; }
+  .brand .mark{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--amber); display:inline-block; margin-bottom:14px; opacity:0; animation:rise .6s ease forwards .1s;
+  }
+  .brand h1{
+    font-family:'Newsreader', serif; font-weight:500; font-size:52px; line-height:1.05; color:var(--ink);
+    opacity:0; animation:rise .7s ease forwards .25s;
+  }
+  .brand p{
+    font-family:'Newsreader', serif; font-style:italic; font-size:18px; color:var(--muted);
+    margin-top:16px; max-width:340px; line-height:1.5; opacity:0; animation:rise .7s ease forwards .4s;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Signature element on this page: a stamped "record found" card stack, echoing the ledger concept */
+  .stamp-stack{ position:relative; z-index:2; padding-left:34px; margin:40px 0; }
+  .stamp{
+    border:1.5px solid var(--paper-line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    background:rgba(255,255,255,.35);
+    max-width:320px;
+    transition:border-color .3s ease, background .3s ease;
+  }
+  .stamp .row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:10px;
+  }
+  .stamp .row .dot{
+    width:8px; height:8px; border-radius:50%;
+    border:1.5px solid var(--muted); display:inline-block; margin-right:6px; vertical-align:middle;
+    transition:all .3s ease;
+  }
+  .stamp.verified{ border-color:var(--sage); background:rgba(110,143,114,.08); }
+  .stamp.verified .row .dot{ background:var(--sage); border-color:var(--sage); }
+  .stamp .line{ height:1px; background:var(--paper-line); margin:10px 0; }
+  .stamp .status{ font-family:'Newsreader', serif; font-size:16px; color:var(--ink); }
+  .stamp.verified .status{ color:var(--sage); }
+
+  .footnote{
+    position:relative; z-index:2; padding-left:34px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--muted); letter-spacing:.03em; line-height:1.7;
+  }
+
+  .formside{ flex:1; background:var(--paper); display:flex; align-items:center; justify-content:center; padding:48px 24px; }
+  .card{ width:100%; max-width:420px; opacity:0; animation:rise .6s ease forwards .2s; }
+  .card .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:8px; display:block;
+  }
+  .mobile-title{ display:none; }
+  @media (max-width:920px){
+    .mobile-title{ display:block; font-family:'Newsreader', serif; font-size:34px; color:var(--ink); margin-bottom:4px; }
+  }
+  .card h2{ font-family:'Newsreader', serif; font-weight:500; font-size:28px; color:var(--ink); margin-bottom:6px; }
+  .card .sub{ font-size:14px; color:var(--muted); margin-bottom:36px; }
+
+  form{ display:flex; flex-direction:column; gap:20px; }
+
+  .field{ position:relative; display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+  }
+  .field input{
+    font-family:'IBM Plex Sans', sans-serif; font-size:16px; padding:12px 4px;
+    border:none; border-bottom:1.5px solid #C9BFA8; background:transparent; color:var(--charcoal);
+    outline:none; transition:border-color .25s ease;
+  }
+  .field input::placeholder{ color:#B8AF9A; }
+  .field input:focus{ border-bottom-color:var(--amber); }
+  .field.error input{ border-bottom-color:var(--error); }
+  .field .msg{ font-size:12.5px; color:var(--error); min-height:16px; display:none; }
+  .field.error .msg{ display:block; }
+
+  .row-between{ display:flex; align-items:center; justify-content:space-between; margin-top:-8px; }
+  .remember{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
+  .remember input{ accent-color:var(--amber); }
+  .forgot{ font-size:13px; color:var(--amber); text-decoration:none; cursor:pointer; }
+  .forgot:hover{ text-decoration:underline; }
+
+  button.submit{
+    margin-top:12px; font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--ink); color:var(--paper); border:none; border-radius:var(--radius); padding:15px 20px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
+    transition:background .25s ease, transform .15s ease;
+  }
+  button.submit:hover{ background:#2A3D63; }
+  button.submit:active{ transform:scale(.98); }
+  button.submit:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  button.submit .arrow{ transition:transform .25s ease; }
+  button.submit:hover .arrow{ transform:translateX(3px); }
+
+  .switch{ margin-top:28px; text-align:center; font-size:14px; color:var(--muted); }
+  .switch a{ color:var(--amber); text-decoration:none; font-weight:500; border-bottom:1px solid transparent; transition:border-color .2s ease; cursor:pointer; }
+  .switch a:hover{ border-bottom-color:var(--amber); }
+
+  .success-banner{
+    display:none; align-items:center; gap:10px; background:rgba(110,143,114,.12);
+    border:1px solid var(--sage); color:#3E5C43; border-radius:var(--radius); padding:12px 14px;
+    font-size:13.5px; margin-bottom:20px;
+  }
+  .success-banner.show{ display:flex; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <aside class="ledger" aria-hidden="true">
+    <div>
+      <div class="brand">
+        <span class="mark">Nazmly · study, in order</span>
+        <h1>Welcome back<br>to your record.</h1>
+        <p>Pick up exactly where you left off — nothing gets lost in Nazmly.</p>
+      </div>
+
+      <div class="stamp-stack">
+        <div class="stamp" id="stamp">
+          <div class="row"><span><span class="dot"></span>Record status</span><span id="stampCode">Pending</span></div>
+          <div class="line"></div>
+          <p class="status" id="stampStatus">Awaiting sign-in…</p>
+        </div>
+      </div>
+    </div>
+    <p class="footnote">No. 002 — access log<br>Nazmly Study Registry</p>
+  </aside>
+
+  <main class="formside">
+    <div class="card">
+      <p class="mobile-title">Nazmly</p>
+      <span class="eyebrow">Welcome back</span>
+      <h2>Log in to Nazmly</h2>
+      <p class="sub">Enter your details to open your study record.</p>
+
+      <div class="success-banner" id="successBanner">✓ Signed in — taking you to your dashboard…</div>
+      <div class="success-banner" id="errorBanner" style="background:rgba(181,72,47,.1); border-color:var(--error); color:var(--error);">No account matches that email and password.</div>
+
+      <form id="loginForm" novalidate>
+        <div class="field" id="field-email">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="off">
+          <span class="msg">Enter a valid email address.</span>
+        </div>
+
+        <div class="field" id="field-password">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Your password" autocomplete="off">
+          <span class="msg">Enter your password.</span>
+        </div>
+
+        <div class="row-between">
+          <label class="remember"><input type="checkbox" id="remember"> Remember me</label>
+          <a class="forgot">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="submit"><span>Log in</span><span class="arrow">→</span></button>
+      </form>
+
+      <p class="switch">New to Nazmly? <a id="signupLink">Create an account</a></p>
+    </div>
+  </main>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const successBanner = document.getElementById('successBanner');
+  const errorBanner = document.getElementById('errorBanner');
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  const stamp = document.getElementById('stamp');
+  const stampCode = document.getElementById('stampCode');
+  const stampStatus = document.getElementById('stampStatus');
+
+  const USERS_KEY = 'nazmly_users';
+  function getUsers(){
+    try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function findUser(emailValue, passwordValue){
+    return getUsers().find(u =>
+      u.email.toLowerCase() === emailValue.toLowerCase() && u.password === passwordValue
+    );
+  }
+
+  function isValidEmail(value){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }
+  function clearError(fieldId){ document.getElementById(fieldId).classList.remove('error'); }
+  function setError(fieldId){ document.getElementById(fieldId).classList.add('error'); }
+
+  function navigateTo(target, options){
+    window.parent.postMessage(Object.assign({ type: 'nazmly:navigate', target }, options || {}), '*');
+  }
+
+  document.getElementById('signupLink').addEventListener('click', () => navigateTo('frame-signup'));
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    let valid = true;
+
+    ['field-email','field-password'].forEach(clearError);
+    errorBanner.classList.remove('show');
+
+    if(!isValidEmail(email.value.trim())){ setError('field-email'); valid = false; }
+    if(password.value.length === 0){ setError('field-password'); valid = false; }
+
+    if(!valid){
+      successBanner.classList.remove('show');
+      stamp.classList.remove('verified');
+      stampCode.textContent = 'Pending';
+      stampStatus.textContent = 'Awaiting sign-in…';
+      const firstError = form.querySelector('.field.error input');
+      if(firstError) firstError.focus();
+      return;
+    }
+
+    const user = findUser(email.value.trim(), password.value);
+    if(!user){
+      setError('field-email');
+      setError('field-password');
+      errorBanner.classList.add('show');
+      successBanner.classList.remove('show');
+      stamp.classList.remove('verified');
+      stampCode.textContent = 'Not found';
+      stampStatus.textContent = 'No matching record.';
+      password.focus();
+      return;
+    }
+
+    // Match found in the local demo database
+    stamp.classList.add('verified');
+    stampCode.textContent = 'Verified';
+    stampStatus.textContent = 'Welcome back, ' + user.fullname.split(' ')[0] + '.';
+    successBanner.classList.add('show');
+
+    setTimeout(() => navigateTo('frame-main', { unlock: ['frame-main', 'frame-timer', 'frame-tasks'] }), 1100);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timer — Nazmly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --paper:#F7F3EA;
+    --paper-line:#DDD4C0;
+    --amber:#D98E2B;
+    --amber-soft:#F1C77C;
+    --sage:#6E8F72;
+    --charcoal:#26241F;
+    --muted:#8A8272;
+    --error:#B5482F;
+    --radius:3px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'IBM Plex Sans', sans-serif;
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 2.6rem;
+    background-position: 0 7.2rem;
+  }
+
+  a{ color:inherit; }
+
+  ::selection{ background:var(--amber-soft); color:var(--ink); }
+
+  /* focus visibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:.72rem;
+    color:var(--muted);
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    background:var(--ink);
+    color:var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:.9rem 1.5rem;
+  }
+  .brandmark{
+    font-family:'Newsreader', serif;
+    font-weight:600;
+    font-size:1.25rem;
+    letter-spacing:.01em;
+    display:flex;
+    align-items:baseline;
+    gap:.4rem;
+  }
+  .brandmark span{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.65rem;
+    color:var(--amber-soft);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .topnav{
+    display:flex;
+    gap:1.6rem;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+  }
+  .topnav a{
+    text-decoration:none;
+    color:#C9CFDE;
+    padding-bottom:.25rem;
+    border-bottom:2px solid transparent;
+  }
+  .topnav a.active{
+    color:var(--paper);
+    border-bottom-color:var(--amber);
+  }
+  .topnav a:hover{ color:var(--paper); }
+
+  /* ---------- layout ---------- */
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:3.2rem 1.5rem 5rem;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    gap:2.5rem;
+    align-items:start;
+  }
+
+  /* ---------- side ledger / brand panel ---------- */
+  .side-panel{
+    border-right:1px solid var(--paper-line);
+    padding-right:2rem;
+  }
+  .side-panel h1{
+    font-family:'Newsreader', serif;
+    font-weight:600;
+    font-size:2.1rem;
+    line-height:1.15;
+    margin:.4rem 0 1rem;
+    color:var(--ink);
+  }
+  .side-panel .lede{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    color:var(--charcoal);
+    font-size:1.02rem;
+    line-height:1.55;
+    margin:0 0 1.8rem;
+  }
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    padding:.6rem 0;
+    border-top:1px solid var(--paper-line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.78rem;
+  }
+  .stat-row:last-child{ border-bottom:1px solid var(--paper-line); }
+  .stat-row .label{ color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+  .stat-row .value{ color:var(--ink); font-weight:600; }
+
+  /* ---------- timer panel ---------- */
+  .timer-panel{ min-width:0; }
+
+  /* binder tabs = mode selector, this is the site's signature element */
+  .mode-tabs{
+    display:flex;
+    gap:.4rem;
+    margin-bottom:0;
+    padding-left:.2rem;
+  }
+  .mode-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    background:var(--paper-line);
+    color:var(--charcoal);
+    border:none;
+    padding:.65rem 1.1rem .55rem;
+    cursor:pointer;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%);
+    position:relative;
+    top:2px;
+    transition: background .15s ease, color .15s ease, top .15s ease;
+  }
+  .mode-tab:hover{ background:#cfc4a8; }
+  .mode-tab[aria-selected="true"]{
+    background:var(--paper);
+    color:var(--ink);
+    font-weight:600;
+    top:0;
+    box-shadow: 0 -1px 0 var(--ink) inset;
+  }
+  .mode-tab[data-mode="focus"][aria-selected="true"]{ box-shadow: 0 -2px 0 var(--amber) inset; }
+  .mode-tab[data-mode="short"][aria-selected="true"]{ box-shadow: 0 -2px 0 var(--sage) inset; }
+  .mode-tab[data-mode="long"][aria-selected="true"]{ box-shadow: 0 -2px 0 var(--sage) inset; }
+
+  .ticket{
+    background:var(--paper);
+    border:1px solid var(--ink);
+    border-radius: 0 var(--radius) var(--radius) var(--radius);
+    padding:2.4rem 2.2rem 2rem;
+  }
+
+  .session-field{
+    display:flex;
+    align-items:baseline;
+    gap:.6rem;
+    border-bottom:1px solid var(--paper-line);
+    padding-bottom:1.1rem;
+    margin-bottom:2.2rem;
+  }
+  .session-field label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .session-field input{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-size:1.15rem;
+    color:var(--ink);
+    padding:.15rem 0;
+  }
+  .session-field input::placeholder{ color:var(--muted); opacity:.8; }
+  .session-field input:focus{ outline:none; }
+  .session-field input:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 4px;
+    border-radius:2px;
+  }
+
+  .durations-row{
+    margin-bottom:1.6rem;
+  }
+  .durations-row .eyebrow{ margin-bottom:.55rem; }
+  .durations-fields{
+    display:flex;
+    gap:1.4rem;
+    flex-wrap:wrap;
+  }
+  .duration-field{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius);
+    padding:.45rem .3rem .45rem .7rem;
+  }
+  .duration-field label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.68rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .duration-field input{
+    width:3.1rem;
+    border:none;
+    background:transparent;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:.92rem;
+    color:var(--ink);
+    text-align:right;
+    -moz-appearance:textfield;
+  }
+  .duration-field input::-webkit-outer-spin-button,
+  .duration-field input::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .duration-field input:focus{ outline:none; }
+  .duration-field:focus-within{
+    border-color:var(--amber);
+  }
+  .duration-field.stale{
+    border-color: var(--amber);
+  }
+
+  .display-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:2.5rem;
+    padding: 1.4rem 0 2.2rem;
+  }
+
+  .dial{
+    position:relative;
+    width:260px;
+    height:260px;
+    flex-shrink:0;
+  }
+  .dial svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .dial-track{ fill:none; stroke:var(--paper-line); stroke-width:3; }
+  .dial-progress{
+    fill:none;
+    stroke:var(--amber);
+    stroke-width:3;
+    stroke-linecap:butt;
+    transition: stroke-dashoffset 1s linear, stroke .3s ease;
+  }
+  .dial[data-mode="short"] .dial-progress,
+  .dial[data-mode="long"] .dial-progress{ stroke:var(--sage); }
+
+  .dial-face{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .time{
+    font-family:'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight:600;
+    font-size:3.4rem;
+    color:var(--ink);
+    letter-spacing:.01em;
+  }
+  .state-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.68rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-top:.35rem;
+  }
+
+  .tally{
+    display:flex;
+    flex-direction:column;
+    gap:.65rem;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .tally .eyebrow{ margin-bottom:.15rem; }
+  .tally-marks{ display:flex; gap:.4rem; }
+  .tally-mark{
+    width:9px; height:22px;
+    background:var(--paper-line);
+    border-radius:1px;
+  }
+  .tally-mark.filled{ background:var(--amber); }
+
+  .controls{
+    display:flex;
+    gap:.7rem;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  button.btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.75rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    padding:.85rem 1.6rem;
+    cursor:pointer;
+    border:1px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    transition: background .15s ease, color .15s ease, transform .1s ease;
+  }
+  button.btn:active{ transform: translateY(1px); }
+  button.btn.primary{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  button.btn.primary:hover{ background:#28395e; }
+  button.btn:not(.primary):hover{ background:var(--paper-line); }
+  button.btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---------- log ledger ---------- */
+  .log-section{
+    margin-top:3.2rem;
+  }
+  .log-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1px solid var(--ink);
+    padding-bottom:.6rem;
+    margin-bottom:.2rem;
+  }
+  .log-header h2{
+    font-family:'Newsreader', serif;
+    font-size:1.3rem;
+    font-weight:600;
+    color:var(--ink);
+    margin:0;
+  }
+  .log-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+  }
+  .log-table th{
+    text-align:left;
+    font-weight:500;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-size:.68rem;
+    padding:.7rem .4rem;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .log-table td{
+    padding:.75rem .4rem;
+    border-bottom:1px solid var(--paper-line);
+    color:var(--charcoal);
+  }
+  .log-table tr:last-child td{ border-bottom:none; }
+  .log-table .col-name{ font-family:'Newsreader', serif; font-style:italic; font-size:.95rem; color:var(--ink); }
+  .badge{
+    display:inline-block;
+    font-size:.65rem;
+    letter-spacing:.06em;
+    padding:.15rem .5rem;
+    border-radius:2px;
+    text-transform:uppercase;
+  }
+  .badge.focus{ background:var(--amber-soft); color:#5a3c0b; }
+  .badge.short, .badge.long{ background:#DCE6DD; color:#3d5240; }
+
+  .empty-log{
+    padding:1.6rem .4rem;
+    color:var(--muted);
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-size:.95rem;
+  }
+
+  /* fade/rise on load */
+  .rise{ animation: rise .5s ease both; }
+  .rise.d1{ animation-delay:.05s; }
+  .rise.d2{ animation-delay:.12s; }
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .rise{ animation:none; }
+    .dial-progress{ transition:none; }
+    button.btn{ transition:none; }
+  }
+
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+    .side-panel{ display:none; }
+    .display-row{ flex-direction:column; gap:1.6rem; }
+    .dial{ width:220px; height:220px; }
+    .time{ font-size:2.8rem; }
+    .ticket{ padding:1.8rem 1.3rem 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brandmark">Nazmly <span>Study Ledger</span></div>
+  <nav class="topnav">
+    <a href="#" >Sign Up</a>
+    <a href="#" class="active" aria-current="page">Timer</a>
+    <a href="#">To‑Do List</a>
+  </nav>
+</header>
+
+<main>
+  <div class="layout">
+
+    <aside class="side-panel rise">
+      <p class="eyebrow">Entry no. 002</p>
+      <h1>Log the hour.</h1>
+      <p class="lede">Pick a session, name it, and let the page keep time. Every focus block gets filed below the moment it's done.</p>
+      <div class="stat-row"><span class="label">Today</span><span class="value" id="stat-today">0 sessions</span></div>
+      <div class="stat-row"><span class="label">Focus time</span><span class="value" id="stat-minutes">0 min</span></div>
+      <div class="stat-row"><span class="label">Cycle</span><span class="value" id="stat-cycle">1 of 4</span></div>
+    </aside>
+
+    <section class="timer-panel">
+
+      <div class="mode-tabs rise" role="tablist" aria-label="Timer mode">
+        <button class="mode-tab" data-mode="focus" role="tab" aria-selected="true">Focus</button>
+        <button class="mode-tab" data-mode="short" role="tab" aria-selected="false">Short Break</button>
+        <button class="mode-tab" data-mode="long" role="tab" aria-selected="false">Long Break</button>
+      </div>
+
+      <div class="ticket rise d1">
+
+        <div class="session-field">
+          <label for="session-name">Filed under</label>
+          <input type="text" id="session-name" placeholder="Untitled session — e.g. Chapter 4 Chemistry" maxlength="60">
+        </div>
+
+        <div class="durations-row">
+          <p class="eyebrow">Set the clock — minutes</p>
+          <div class="durations-fields">
+            <div class="duration-field">
+              <label for="dur-focus">Focus</label>
+              <input type="number" id="dur-focus" min="1" max="180" step="1" value="25" inputmode="numeric">
+            </div>
+            <div class="duration-field">
+              <label for="dur-short">Short break</label>
+              <input type="number" id="dur-short" min="1" max="60" step="1" value="5" inputmode="numeric">
+            </div>
+            <div class="duration-field">
+              <label for="dur-long">Long break</label>
+              <input type="number" id="dur-long" min="1" max="90" step="1" value="15" inputmode="numeric">
+            </div>
+          </div>
+        </div>
+
+        <div class="display-row">
+          <div class="dial" data-mode="focus">
+            <svg viewBox="0 0 100 100">
+              <circle class="dial-track" cx="50" cy="50" r="46"></circle>
+              <circle class="dial-progress" id="dial-progress" cx="50" cy="50" r="46"
+                stroke-dasharray="289" stroke-dashoffset="0"></circle>
+            </svg>
+            <div class="dial-face">
+              <div class="time" id="time-display">25:00</div>
+              <div class="state-label" id="state-label">Ready to start</div>
+            </div>
+          </div>
+
+          <div class="tally">
+            <p class="eyebrow">Toward long break</p>
+            <div class="tally-marks" id="tally-marks">
+              <span class="tally-mark"></span>
+              <span class="tally-mark"></span>
+              <span class="tally-mark"></span>
+              <span class="tally-mark"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn primary" id="btn-start">Start</button>
+          <button class="btn" id="btn-pause" disabled>Pause</button>
+          <button class="btn" id="btn-reset">Reset</button>
+          <button class="btn" id="btn-skip">Skip</button>
+        </div>
+
+      </div>
+
+      <div class="log-section rise d2">
+        <div class="log-header">
+          <h2>Today's entries</h2>
+          <span class="eyebrow" id="log-count">0 filed</span>
+        </div>
+        <table class="log-table" id="log-table">
+          <thead>
+            <tr><th>Time</th><th>Session</th><th>Block</th><th>Length</th></tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+        <p class="empty-log" id="empty-log">Nothing filed yet — finish a focus block and it lands here.</p>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<script>
+(function(){
+  const DURATIONS = { focus: 25*60, short: 5*60, long: 15*60 };
+  const DEFAULT_MINUTES = { focus: 25, short: 5, long: 15 };
+  const CIRC = 2 * Math.PI * 46;
+
+  let mode = 'focus';
+  let secondsLeft = DURATIONS.focus;
+  let running = false;
+  let intervalId = null;
+  let focusCountInCycle = 0; // 0..3, resets after long break
+  let todaySessions = 0;
+  let todayMinutes = 0;
+
+  const timeDisplay = document.getElementById('time-display');
+  const stateLabel = document.getElementById('state-label');
+  const dial = document.querySelector('.dial');
+  const dialProgress = document.getElementById('dial-progress');
+  const btnStart = document.getElementById('btn-start');
+  const btnPause = document.getElementById('btn-pause');
+  const btnReset = document.getElementById('btn-reset');
+  const btnSkip = document.getElementById('btn-skip');
+  const sessionNameInput = document.getElementById('session-name');
+  const tallyMarks = document.querySelectorAll('.tally-mark');
+  const logBody = document.getElementById('log-body');
+  const logCount = document.getElementById('log-count');
+  const emptyLog = document.getElementById('empty-log');
+  const statToday = document.getElementById('stat-today');
+  const statMinutes = document.getElementById('stat-minutes');
+  const statCycle = document.getElementById('stat-cycle');
+  const tabs = document.querySelectorAll('.mode-tab');
+  const durationInputs = {
+    focus: document.getElementById('dur-focus'),
+    short: document.getElementById('dur-short'),
+    long: document.getElementById('dur-long')
+  };
+
+  dialProgress.setAttribute('stroke-dasharray', CIRC.toFixed(2));
+
+  function formatTime(s){
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return m + ':' + sec;
+  }
+
+  function labelForMode(m){
+    if (m === 'focus') return running ? 'In session' : 'Ready to start';
+    if (m === 'short') return running ? 'Short break' : 'Ready for a short break';
+    return running ? 'Long break' : 'Ready for a long break';
+  }
+
+  function updateDial(){
+    const total = DURATIONS[mode];
+    const fraction = secondsLeft / total;
+    const offset = CIRC * (1 - fraction);
+    dialProgress.style.strokeDashoffset = offset.toFixed(2);
+    dial.setAttribute('data-mode', mode);
+  }
+
+  function updateTally(){
+    tallyMarks.forEach((mark, i) => {
+      mark.classList.toggle('filled', i < focusCountInCycle);
+    });
+    statCycle.textContent = (focusCountInCycle + 1) + ' of 4';
+  }
+
+  function render(){
+    timeDisplay.textContent = formatTime(secondsLeft);
+    stateLabel.textContent = labelForMode(mode);
+    updateDial();
+    document.title = (running ? formatTime(secondsLeft) + ' · ' : '') + 'Timer — Nazmly';
+  }
+
+  function setMode(newMode, opts){
+    opts = opts || {};
+    mode = newMode;
+    secondsLeft = DURATIONS[mode];
+    tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.mode === mode ? 'true' : 'false'));
+    if (!opts.keepRunning) stopTimer();
+    render();
+  }
+
+  function stopTimer(){
+    running = false;
+    clearInterval(intervalId);
+    btnStart.textContent = 'Start';
+    btnStart.disabled = false;
+    btnPause.disabled = true;
+  }
+
+  function startTimer(){
+    running = true;
+    btnStart.disabled = true;
+    btnPause.disabled = false;
+    render();
+    intervalId = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft <= 0){
+        handleComplete();
+        return;
+      }
+      render();
+    }, 1000);
+  }
+
+  function pauseTimer(){
+    running = false;
+    clearInterval(intervalId);
+    btnStart.textContent = 'Resume';
+    btnStart.disabled = false;
+    btnPause.disabled = true;
+    stateLabel.textContent = 'Paused';
+  }
+
+  function resetTimer(){
+    stopTimer();
+    secondsLeft = DURATIONS[mode];
+    btnStart.textContent = 'Start';
+    render();
+  }
+
+  function handleComplete(){
+    clearInterval(intervalId);
+    running = false;
+
+    if (mode === 'focus'){
+      const name = sessionNameInput.value.trim() || 'Untitled session';
+      logSession(name, 'Focus', DURATIONS.focus / 60);
+      focusCountInCycle++;
+      todaySessions++;
+      todayMinutes += DURATIONS.focus / 60;
+      updateTally();
+      updateStats();
+
+      if (focusCountInCycle >= 4){
+        focusCountInCycle = 0;
+        setMode('long');
+      } else {
+        setMode('short');
+      }
+    } else {
+      const blockLabel = mode === 'short' ? 'Short Break' : 'Long Break';
+      logSession('—', blockLabel, DURATIONS[mode] / 60);
+      setMode('focus');
+    }
+
+    btnStart.textContent = 'Start';
+    btnStart.disabled = false;
+    btnPause.disabled = true;
+    render();
+  }
+
+  function logSession(name, block, minutes){
+    emptyLog.style.display = 'none';
+    const row = document.createElement('tr');
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const badgeClass = block === 'Focus' ? 'focus' : (block === 'Short Break' ? 'short' : 'long');
+    row.innerHTML =
+      '<td>' + timeStr + '</td>' +
+      '<td class="col-name">' + escapeHtml(name) + '</td>' +
+      '<td><span class="badge ' + badgeClass + '">' + block + '</span></td>' +
+      '<td>' + minutes + ' min</td>';
+    logBody.prepend(row);
+    const count = logBody.children.length;
+    logCount.textContent = count + ' filed';
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updateStats(){
+    statToday.textContent = todaySessions + (todaySessions === 1 ? ' session' : ' sessions');
+    statMinutes.textContent = Math.round(todayMinutes) + ' min';
+  }
+
+  function clampMinutes(v, max){
+    const n = Math.round(Number(v));
+    if (isNaN(n) || n < 1) return 1;
+    if (n > max) return max;
+    return n;
+  }
+
+  function applyDurationChange(key){
+    const input = durationInputs[key];
+    const max = Number(input.max);
+    const minutes = clampMinutes(input.value, max);
+    input.value = minutes;
+    DURATIONS[key] = minutes * 60;
+
+    const isLiveMode = (key === mode);
+    if (isLiveMode && !running){
+      secondsLeft = DURATIONS[key];
+      render();
+    } else if (isLiveMode && running){
+      // don't yank time out from under an active session —
+      // new length takes effect the next time this block starts
+      stateLabel.textContent = 'New length filed — starts next round';
+    }
+  }
+
+  Object.keys(durationInputs).forEach(key => {
+    durationInputs[key].addEventListener('change', () => applyDurationChange(key));
+    durationInputs[key].addEventListener('blur', () => applyDurationChange(key));
+  });
+
+  btnStart.addEventListener('click', () => {
+    if (secondsLeft === 0) secondsLeft = DURATIONS[mode];
+    startTimer();
+  });
+  btnPause.addEventListener('click', pauseTimer);
+  btnReset.addEventListener('click', resetTimer);
+  btnSkip.addEventListener('click', () => { clearInterval(intervalId); handleComplete(); });
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => setMode(tab.dataset.mode));
+  });
+
+  updateTally();
+  updateStats();
+  render();
+})();
+</script>
+
+</body>
+</html>

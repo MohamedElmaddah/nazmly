@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nazmly — Choose your board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A; --paper:#F7F3EA; --paper-line:#DDD4C0;
+    --amber:#D98E2B; --amber-soft:#F1C77C; --sage:#6E8F72;
+    --charcoal:#26241F; --muted:#8A8272; --radius:3px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0px, transparent 39px, var(--paper-line) 39px, var(--paper-line) 40px),
+      var(--paper);
+    color:var(--charcoal);
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:48px 24px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+  @keyframes rise{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .wrap{ width:100%; max-width:760px; }
+
+  .head{ margin-bottom:44px; opacity:0; animation:rise .6s ease forwards .1s; }
+  .head .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--amber); display:block; margin-bottom:10px;
+  }
+  .head h1{
+    font-family:'Newsreader', serif; font-weight:500; font-size:40px; color:var(--ink); line-height:1.1;
+  }
+  .head p{ font-size:15px; color:var(--muted); margin-top:10px; max-width:460px; line-height:1.5; }
+
+  .boards{
+    display:grid; grid-template-columns:1fr 1fr; gap:20px;
+  }
+  @media (max-width:640px){ .boards{ grid-template-columns:1fr; } }
+
+  .board{
+    position:relative;
+    text-align:left;
+    background:rgba(255,255,255,.4);
+    border:1.5px solid var(--paper-line);
+    border-radius:var(--radius);
+    padding:32px 26px;
+    cursor:pointer;
+    display:flex; flex-direction:column; gap:14px;
+    transition:border-color .25s ease, background .25s ease, transform .15s ease;
+    opacity:0; animation:rise .6s ease forwards;
+    font-family:inherit;
+  }
+  .board:nth-child(1){ animation-delay:.2s; }
+  .board:nth-child(2){ animation-delay:.32s; }
+  .board:hover{ border-color:var(--amber); background:rgba(217,142,43,.06); }
+  .board:active{ transform:scale(.98); }
+  .board:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  .board .tag{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .board .icon{ font-size:26px; }
+  .board h2{ font-family:'Newsreader', serif; font-weight:500; font-size:24px; color:var(--ink); }
+  .board p{ font-size:13.5px; color:var(--muted); line-height:1.5; }
+  .board .go{
+    margin-top:auto; font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--amber); display:flex; align-items:center; gap:6px;
+  }
+  .board .go .arrow{ transition:transform .25s ease; }
+  .board:hover .go .arrow{ transform:translateX(3px); }
+
+  .footline{
+    margin-top:32px; text-align:center; font-size:13px; color:var(--muted);
+    opacity:0; animation:rise .6s ease forwards .45s;
+  }
+  .footline a{ color:var(--amber); text-decoration:none; cursor:pointer; font-weight:500; }
+  .footline a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="head">
+    <span class="eyebrow">Nazmly · your record</span>
+    <h1>Where to today?</h1>
+    <p>Pick a board to work from — track focused time, or keep your task list in order.</p>
+  </div>
+
+  <div class="boards">
+    <button type="button" class="board" data-target="frame-timer">
+      <span class="icon">⏱</span>
+      <span class="tag">No. 002</span>
+      <h2>Timer</h2>
+      <p>Run a focused study session, track time on task, and build a steady streak.</p>
+      <span class="go">Open timer <span class="arrow">→</span></span>
+    </button>
+
+    <button type="button" class="board" data-target="frame-tasks">
+      <span class="icon">📋</span>
+      <span class="tag">No. 003</span>
+      <h2>Task Ledger</h2>
+      <p>File your to-dos by subject, check them off, and keep the list in order.</p>
+      <span class="go">Open ledger <span class="arrow">→</span></span>
+    </button>
+  </div>
+
+  <p class="footline">Not you? <a id="logoutLink">Log out</a></p>
+</div>
+
+<script>
+  function navigateTo(target, options){
+    window.parent.postMessage(Object.assign({ type: 'nazmly:navigate', target }, options || {}), '*');
+  }
+  document.querySelectorAll('.board').forEach(btn => {
+    btn.addEventListener('click', () => navigateTo(btn.dataset.target));
+  });
+  document.getElementById('logoutLink').addEventListener('click', () => {
+    navigateTo('frame-login', {
+      lock: ['frame-main', 'frame-timer', 'frame-tasks'],
+      reload: 'frame-login'
+    });
+  });
+</script>
+
+</body>
+</html>

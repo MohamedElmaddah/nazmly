@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nazmly — Create your account</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A; --paper:#F7F3EA; --paper-line:#DDD4C0;
+    --amber:#D98E2B; --amber-soft:#F1C77C; --sage:#6E8F72;
+    --charcoal:#26241F; --muted:#8A8272; --error:#B5482F; --radius:3px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--ink); color:var(--charcoal);
+    min-height:100vh; display:flex; align-items:stretch; justify-content:center;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+
+  .stage{ display:flex; width:100%; min-height:100vh; }
+
+  .ledger{
+    position:relative; flex:0 0 42%;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0px, transparent 39px, var(--paper-line) 39px, var(--paper-line) 40px),
+      var(--paper);
+    padding:64px 56px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;
+  }
+  .ledger::before{ content:""; position:absolute; top:0; bottom:0; left:110px; width:1px; background:#D8AFA0; opacity:.6; }
+  @media (max-width:920px){ .ledger{display:none;} }
+
+  .brand{ position:relative; z-index:2; padding-left:34px; }
+  .brand .mark{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--amber); display:inline-block; margin-bottom:14px; opacity:0; animation:rise .6s ease forwards .1s;
+  }
+  .brand h1{
+    font-family:'Newsreader', serif; font-weight:500; font-size:52px; line-height:1.05; color:var(--ink);
+    opacity:0; animation:rise .7s ease forwards .25s;
+  }
+  .brand p{
+    font-family:'Newsreader', serif; font-style:italic; font-size:18px; color:var(--muted);
+    margin-top:16px; max-width:340px; line-height:1.5; opacity:0; animation:rise .7s ease forwards .4s;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .tabs{ position:relative; z-index:2; padding-left:34px; display:flex; flex-direction:column; gap:0; margin:40px 0; }
+  .tab-row{
+    display:flex; align-items:center; gap:14px; padding:11px 0;
+    border-bottom:1px solid var(--paper-line); transition:opacity .3s ease;
+  }
+  .tab-row .num{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted); width:18px; }
+  .tab-row .tag{ width:9px; height:9px; border-radius:50%; border:1.5px solid var(--muted); flex-shrink:0; transition:all .35s ease; }
+  .tab-row.done .tag{ background:var(--sage); border-color:var(--sage); box-shadow:0 0 0 3px rgba(110,143,114,.15); }
+  .tab-row .label{ font-size:14px; color:var(--charcoal); letter-spacing:.01em; }
+  .tab-row.done .label{ color:var(--sage); font-weight:500; }
+
+  .footnote{
+    position:relative; z-index:2; padding-left:34px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--muted); letter-spacing:.03em; line-height:1.7;
+  }
+
+  .formside{ flex:1; background:var(--paper); display:flex; align-items:center; justify-content:center; padding:48px 24px; }
+  .card{ width:100%; max-width:420px; opacity:0; animation:rise .6s ease forwards .2s; }
+  .card .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:8px; display:block;
+  }
+  .mobile-title{ display:none; }
+  @media (max-width:920px){
+    .mobile-title{ display:block; font-family:'Newsreader', serif; font-size:34px; color:var(--ink); margin-bottom:4px; }
+  }
+  .card h2{ font-family:'Newsreader', serif; font-weight:500; font-size:28px; color:var(--ink); margin-bottom:6px; }
+  .card .sub{ font-size:14px; color:var(--muted); margin-bottom:36px; }
+
+  form{ display:flex; flex-direction:column; gap:20px; }
+
+  .field{ position:relative; display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+  }
+  .field input{
+    font-family:'IBM Plex Sans', sans-serif; font-size:16px; padding:12px 4px;
+    border:none; border-bottom:1.5px solid #C9BFA8; background:transparent; color:var(--charcoal);
+    outline:none; transition:border-color .25s ease;
+  }
+  .field input::placeholder{ color:#B8AF9A; }
+  .field input:focus{ border-bottom-color:var(--amber); }
+  .field.error input{ border-bottom-color:var(--error); }
+  .field .msg{ font-size:12.5px; color:var(--error); min-height:16px; display:none; }
+  .field.error .msg{ display:block; }
+
+  .role-group{ display:flex; flex-direction:column; gap:6px; }
+  .role-group > span{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+  }
+  .role-options{ display:flex; gap:10px; }
+  .role-option{ flex:1; position:relative; }
+  .role-option input{ position:absolute; opacity:0; inset:0; cursor:pointer; margin:0; }
+  .role-option label{
+    display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 8px;
+    border:1.5px solid #D8CEB6; border-radius:var(--radius); font-size:13.5px; color:var(--charcoal);
+    cursor:pointer; transition:all .2s ease; font-family:'IBM Plex Sans', sans-serif;
+  }
+  .role-option input:checked + label{
+    border-color:var(--amber); background:rgba(217,142,43,.08); color:var(--ink); font-weight:500;
+  }
+  .role-option input:focus-visible + label{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  .pw-hint{ font-size:12px; color:var(--muted); margin-top:-4px; }
+
+  button.submit{
+    margin-top:12px; font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--ink); color:var(--paper); border:none; border-radius:var(--radius); padding:15px 20px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
+    transition:background .25s ease, transform .15s ease;
+  }
+  button.submit:hover{ background:#2A3D63; }
+  button.submit:active{ transform:scale(.98); }
+  button.submit:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  button.submit .arrow{ transition:transform .25s ease; }
+  button.submit:hover .arrow{ transform:translateX(3px); }
+
+  .switch{ margin-top:28px; text-align:center; font-size:14px; color:var(--muted); }
+  .switch a{ color:var(--amber); text-decoration:none; font-weight:500; border-bottom:1px solid transparent; transition:border-color .2s ease; cursor:pointer; }
+  .switch a:hover{ border-bottom-color:var(--amber); }
+
+  .success-banner{
+    display:none; align-items:center; gap:10px; background:rgba(110,143,114,.12);
+    border:1px solid var(--sage); color:#3E5C43; border-radius:var(--radius); padding:12px 14px;
+    font-size:13.5px; margin-bottom:20px;
+  }
+  .success-banner.show{ display:flex; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <aside class="ledger" aria-hidden="true">
+    <div>
+      <div class="brand">
+        <span class="mark">Nazmly · study, in order</span>
+        <h1>Every subject,<br>filed in its place.</h1>
+        <p>"Nazm" means order — the thread that keeps scattered pages into one clear line of study.</p>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <div class="tab-row" data-field="fullname"><span class="num">01</span><span class="tag"></span><span class="label">Your name</span></div>
+        <div class="tab-row" data-field="email"><span class="num">02</span><span class="tag"></span><span class="label">Your email</span></div>
+        <div class="tab-row" data-field="grade"><span class="num">03</span><span class="tag"></span><span class="label">Your grade</span></div>
+        <div class="tab-row" data-field="password"><span class="num">04</span><span class="tag"></span><span class="label">A password</span></div>
+      </div>
+    </div>
+    <p class="footnote">No. 001 — issued on signup<br>Nazmly Study Registry</p>
+  </aside>
+
+  <main class="formside">
+    <div class="card">
+      <p class="mobile-title">Nazmly</p>
+      <span class="eyebrow">Create your account</span>
+      <h2>Start your study record</h2>
+      <p class="sub">A few details and you're filed in.</p>
+
+      <div class="success-banner" id="successBanner">✓ Account created — taking you to log in…</div>
+
+      <form id="signupForm" novalidate>
+        <div class="field" id="field-fullname">
+          <label for="fullname">Full name</label>
+          <input type="text" id="fullname" name="fullname" placeholder="e.g. Sara Ahmed" autocomplete="name">
+          <span class="msg">Enter your full name.</span>
+        </div>
+
+        <div class="field" id="field-email">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+          <span class="msg" id="email-msg">Enter a valid email address.</span>
+        </div>
+
+        <div class="role-group" id="field-grade">
+          <span>Your grade</span>
+          <div class="role-options">
+            <div class="role-option"><input type="radio" name="grade" id="grade-10" value="10"><label for="grade-10">Grade 10</label></div>
+            <div class="role-option"><input type="radio" name="grade" id="grade-11" value="11"><label for="grade-11">Grade 11</label></div>
+            <div class="role-option"><input type="radio" name="grade" id="grade-12" value="12"><label for="grade-12">Grade 12</label></div>
+          </div>
+          <span class="msg" id="grade-msg" style="display:none;">Choose your grade.</span>
+        </div>
+
+        <div class="field" id="field-password">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="At least 8 characters" autocomplete="new-password">
+          <span class="pw-hint">Use 8+ characters — mix letters and numbers for a stronger record.</span>
+          <span class="msg">Password must be at least 8 characters.</span>
+        </div>
+
+        <div class="field" id="field-confirm">
+          <label for="confirm">Confirm password</label>
+          <input type="password" id="confirm" name="confirm" placeholder="Repeat your password" autocomplete="new-password">
+          <span class="msg">Passwords don't match.</span>
+        </div>
+
+        <button type="submit" class="submit"><span>File my account</span><span class="arrow">→</span></button>
+      </form>
+
+      <p class="switch">Already have an account? <a id="loginLink">Log in</a></p>
+      <p style="text-align:center; font-size:11.5px; color:var(--muted); margin-top:14px; font-family:'IBM Plex Mono', monospace;">Demo mode — accounts are saved only in this browser.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+  const form = document.getElementById('signupForm');
+  const successBanner = document.getElementById('successBanner');
+  const fullname = document.getElementById('fullname');
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  const confirm = document.getElementById('confirm');
+  const gradeRadios = document.querySelectorAll('input[name="grade"]');
+
+  const tabRows = {
+    fullname: document.querySelector('.tab-row[data-field="fullname"]'),
+    email: document.querySelector('.tab-row[data-field="email"]'),
+    grade: document.querySelector('.tab-row[data-field="grade"]'),
+    password: document.querySelector('.tab-row[data-field="password"]')
+  };
+
+  function setTab(key, done){ const row = tabRows[key]; if(row) row.classList.toggle('done', done); }
+  function isValidEmail(value){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }
+
+  fullname.addEventListener('input', () => setTab('fullname', fullname.value.trim().length > 1));
+  email.addEventListener('input', () => setTab('email', isValidEmail(email.value.trim())));
+  password.addEventListener('input', () => setTab('password', password.value.length >= 8 && confirm.value === password.value && confirm.value.length > 0));
+  confirm.addEventListener('input', () => setTab('password', password.value.length >= 8 && confirm.value === password.value && confirm.value.length > 0));
+  gradeRadios.forEach(r => r.addEventListener('change', () => { setTab('grade', true); document.getElementById('grade-msg').style.display = 'none'; }));
+
+  function clearError(fieldId){ document.getElementById(fieldId).classList.remove('error'); }
+  function setError(fieldId){ document.getElementById(fieldId).classList.add('error'); }
+
+  // ---- Local demo "database" (this browser only, not secure) ----
+  const USERS_KEY = 'nazmly_users';
+  function getUsers(){
+    try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function saveUser(user){
+    const users = getUsers();
+    users.push(user);
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+  function emailTaken(emailValue){
+    return getUsers().some(u => u.email.toLowerCase() === emailValue.toLowerCase());
+  }
+
+  // Notify the parent shell (index.html) to switch tabs, optionally unlocking others
+  function navigateTo(target, options){
+    window.parent.postMessage(Object.assign({ type: 'nazmly:navigate', target }, options || {}), '*');
+  }
+
+  document.getElementById('loginLink').addEventListener('click', () => navigateTo('frame-login', { unlock: ['frame-login'] }));
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    let valid = true;
+
+    ['field-fullname','field-email','field-password','field-confirm'].forEach(clearError);
+    document.getElementById('grade-msg').style.display = 'none';
+    document.getElementById('email-msg').textContent = 'Enter a valid email address.';
+
+    if(fullname.value.trim().length < 2){ setError('field-fullname'); valid = false; }
+
+    const emailValue = email.value.trim();
+    if(!isValidEmail(emailValue)){
+      setError('field-email');
+      valid = false;
+    } else if(emailTaken(emailValue)){
+      document.getElementById('email-msg').textContent = 'An account with this email already exists — try logging in instead.';
+      setError('field-email');
+      valid = false;
+    }
+
+    if(!document.querySelector('input[name="grade"]:checked')){ document.getElementById('grade-msg').style.display = 'block'; valid = false; }
+    if(password.value.length < 8){ setError('field-password'); valid = false; }
+    if(confirm.value !== password.value || confirm.value.length === 0){ setError('field-confirm'); valid = false; }
+
+    if(!valid){
+      successBanner.classList.remove('show');
+      const firstError = form.querySelector('.field.error input');
+      if(firstError) firstError.focus();
+      return;
+    }
+
+    // Save to the local demo database
+    saveUser({
+      fullname: fullname.value.trim(),
+      email: emailValue,
+      grade: document.querySelector('input[name="grade"]:checked').value,
+      password: password.value
+    });
+
+    successBanner.classList.add('show');
+    Object.keys(tabRows).forEach(k => setTab(k, true));
+
+    // Auto-advance to the login page after a short pause
+    setTimeout(() => navigateTo('frame-login', { unlock: ['frame-login'] }), 1100);
+  });
+</script>
+
+</body>
+</html>
